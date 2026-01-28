@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { generateBrainStateImage, editBrainImage } from '../services/geminiService';
 import { BrainState, HistoryPoint } from '../types';
-import { Target, X, Zap, Activity, Smile, ScanLine, RefreshCcw, ArrowRight } from 'lucide-react';
+import { Target, X, Zap, Activity, Smile, ScanLine, RefreshCcw, ArrowRight, Terminal } from 'lucide-react';
 
 interface BrainVisualizerProps {
   brainState: BrainState;
@@ -16,10 +16,49 @@ const BrainVisualizer: React.FC<BrainVisualizerProps> = ({ brainState, compariso
   const [prompt, setPrompt] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [activeRegion, setActiveRegion] = useState<RegionType>(null);
+  const [logs, setLogs] = useState<string[]>([]);
+  const logEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll logs
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs]);
+
+  // Log generation loop when image is active
+  useEffect(() => {
+    if (!imageUrl) return;
+
+    const generateLog = () => {
+      const actions = [
+        "Tracing synaptic pathways...",
+        "Measuring receptor density...",
+        "Analyzing neurochemical gradients...",
+        "Mapping cortex activity...",
+        "Verifying amygdala response...",
+        "Calculating plasticity index...",
+        `Monitoring ${brainState.substance} metabolites...`,
+        "Engineered pathway convergence check..."
+      ];
+      
+      const specific = [];
+      if (brainState.dopamine.current > 1.2) specific.push("ALERT: High Dopaminergic Flux detected.");
+      if (brainState.serotonin.current < 0.6) specific.push("WARN: Serotonin uptake inhibited.");
+      if (brainState.adrenaline.current > 1.2) specific.push("ALERT: Adrenal cortex overactive.");
+      
+      const pool = [...actions, ...specific];
+      const newLog = `[${new Date().toISOString().split('T')[1].slice(0,8)}] > ${pool[Math.floor(Math.random() * pool.length)]}`;
+      
+      setLogs(prev => [...prev.slice(-6), newLog]);
+    };
+
+    const interval = setInterval(generateLog, 2500);
+    return () => clearInterval(interval);
+  }, [imageUrl, brainState]);
 
   const handleGenerateInitial = async () => {
     setIsLoading(true);
     setError(null);
+    setLogs(prev => [...prev, ">>> INITIALIZING NEURO-SCAN SEQUENCE..."]);
     try {
       const result = await generateBrainStateImage(
         brainState.dopamine.current,
@@ -27,8 +66,10 @@ const BrainVisualizer: React.FC<BrainVisualizerProps> = ({ brainState, compariso
         brainState.substance
       );
       setImageUrl(result);
+      setLogs(prev => [...prev, ">>> MODEL GENERATED. SYNAPTIC LINK ESTABLISHED."]);
     } catch (err) {
       setError("Failed to generate initial neural scan.");
+      setLogs(prev => [...prev, ">>> ERROR: SCAN FAILED."]);
     } finally {
       setIsLoading(false);
     }
@@ -39,10 +80,12 @@ const BrainVisualizer: React.FC<BrainVisualizerProps> = ({ brainState, compariso
     
     setIsLoading(true);
     setError(null);
+    setLogs(prev => [...prev, `>>> INJECTING MODIFIER: "${prompt.toUpperCase()}"...`]);
     try {
       const result = await editBrainImage(imageUrl, prompt);
       setImageUrl(result);
       setPrompt(''); 
+      setLogs(prev => [...prev, ">>> MODEL UPDATED."]);
     } catch (err) {
       setError("Failed to modify visual model.");
     } finally {
@@ -98,7 +141,7 @@ const BrainVisualizer: React.FC<BrainVisualizerProps> = ({ brainState, compariso
   const regionData = getRegionInfo(activeRegion);
 
   return (
-    <div className="flex flex-col bg-black/40 backdrop-blur-3xl rounded-3xl p-6 shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5 relative overflow-hidden h-[500px]">
+    <div className="flex flex-col bg-black/40 backdrop-blur-3xl rounded-3xl p-6 shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/5 relative overflow-hidden h-[600px]">
       <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-500/40 rounded-tl-3xl"></div>
       <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyan-500/40 rounded-tr-3xl"></div>
       <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-cyan-500/40 rounded-bl-3xl"></div>
@@ -139,6 +182,9 @@ const BrainVisualizer: React.FC<BrainVisualizerProps> = ({ brainState, compariso
               alt="Neural Model" 
               className="w-full h-full object-cover mix-blend-lighten opacity-80"
             />
+            
+            {/* Neural Flow Animation Layer */}
+            <div className="absolute inset-0 z-10 animate-neural-flow"></div>
             
             <div className="absolute inset-0 z-20 pointer-events-none opacity-50">
                <div className="w-full h-full bg-[radial-gradient(circle_at_center,transparent_0%,rgba(6,9,15,1)_100%)]"></div>
@@ -225,6 +271,23 @@ const BrainVisualizer: React.FC<BrainVisualizerProps> = ({ brainState, compariso
           </div>
         )}
       </div>
+
+      {/* System Logs */}
+      {imageUrl && (
+        <div className="mt-4 bg-black/60 rounded-xl border border-white/10 h-24 overflow-hidden relative scanline">
+          <div className="p-2 space-y-1 font-mono text-[9px] text-cyan-500/80">
+            {logs.map((log, i) => (
+              <div key={i} className="animate-in fade-in slide-in-from-left-2 duration-300">
+                {log}
+              </div>
+            ))}
+            <div ref={logEndRef} />
+          </div>
+          <div className="absolute bottom-2 right-2 text-[8px] uppercase font-bold text-cyan-700 animate-pulse">
+             Neural I/O Active
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 flex gap-2">
         <input
