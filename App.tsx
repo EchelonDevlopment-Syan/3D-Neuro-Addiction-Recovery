@@ -50,6 +50,12 @@ const SUBSTANCE_IMPACTS = {
     [AddictionStage.EARLY]: { d: 2.5, s: 1.1, a: 2.0 },
     [AddictionStage.MODERATE]: { d: 0.4, s: 0.5, a: 1.5 },
     [AddictionStage.SEVERE]: { d: 0.1, s: 0.2, a: 0.4 },
+  },
+  [SubstanceType.MDMA]: {
+    [AddictionStage.NORMAL]: { d: 1.0, s: 1.0, a: 1.0 },
+    [AddictionStage.EARLY]: { d: 1.5, s: 3.0, a: 1.4 },
+    [AddictionStage.MODERATE]: { d: 0.6, s: 0.4, a: 1.2 },
+    [AddictionStage.SEVERE]: { d: 0.3, s: 0.1, a: 1.5 },
   }
 };
 
@@ -57,6 +63,7 @@ const RECOVERY_MODIFIERS = {
   [SubstanceType.ALCOHOL]: { d: 1.0, s: 0.8, a: 1.0 },
   [SubstanceType.OPIOIDS]: { d: 0.6, s: 0.9, a: 0.7 },
   [SubstanceType.STIMULANTS]: { d: 0.7, s: 0.9, a: 1.2 },
+  [SubstanceType.MDMA]: { d: 0.8, s: 0.6, a: 1.0 },
 };
 
 const SnowEffect = () => {
@@ -188,6 +195,8 @@ const App: React.FC = () => {
            dMult = 2.5; sMult = 0.5; aMult = 0.4;
         } else if (prev.substance === SubstanceType.STIMULANTS) {
            dMult = 3.0; sMult = 0.6; aMult = 2.5;
+        } else if (prev.substance === SubstanceType.MDMA) {
+           dMult = 2.0; sMult = 4.0; aMult = 1.5;
         }
 
         const newState = {

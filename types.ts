@@ -25,5 +25,6 @@ export enum AddictionStage {
 export enum SubstanceType {
   ALCOHOL = 'alcohol',
   OPIOIDS = 'opioids',
-  STIMULANTS = 'stimulants'
+  STIMULANTS = 'stimulants',
+  MDMA = 'mdma'
 }
